@@ -1,0 +1,21 @@
+# 环境变量（含 API Key）
+backend/.env
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+venv/
+*.egg-info/
+
+# Next.js
+frontend/
+
+# 运行时数据
+backend/output/
+backend/research_repo/
+backend/vector_store/
+
+# 系统
+.DS_Store
+*.pem
