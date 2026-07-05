@@ -80,7 +80,8 @@ LLM_CACHE_ENABLED=true
 
 ## 截图
 
-![主界面](screenshots/main.png)
+![主界面](<img width="1811" height="975" alt="image" src="https://github.com/user-attachments/assets/93b2b931-3166-4400-bd00-2aeaeb764c6c" />
+)
 
 ## Roadmap
 
