@@ -1,124 +1,104 @@
-# Research Agent - 智能研究助手
+# Research Agent
 
-一个基于 AI 的自动化研究工具。输入研究主题，自动搜索论文、分析研究现状、发现研究空白、生成研究报告。
+输入研究主题 → AI 自动搜索顶会论文 → 分析研究空白 → 生成完整研究报告
 
-## 一句话理解
+## Demo
 
-**输入研究主题 → 自动搜论文 → 自动生成研究报告**
+![Demo](demo.gif)
 
-## 系统架构
+## 功能
 
-```
-前端 (Next.js :3000) ── API代理 ──► 后端 (FastAPI :8000)
-                                        │
-                                   AI Agent 团队
-                                   (Planner → Researcher → Reader →
-                                    Gap → Critic ⇄ Solution → Experiment)
-                                        │
-                                   记忆系统 (SQLite + FAISS)
-                                   (LLM缓存 / 研究历史 / 知识库)
-```
+- **自动化研究流程**：输入主题，AI 自动完成文献搜索、论文分析、空白识别、方案设计
+- **8 Agent 协作**：Planner → Researcher → Reader → Gap → Critic ⇄ Solution → Experiment，评审循环保证分析质量
+- **顶会过滤**：搜索范围限定 NeurIPS / ICML / ICLR / CVPR / ACL / OSDI 等 20+ 顶会顶刊
+- **年份限定**：自由设置搜索年份范围
+- **LLM 缓存**：精确 + 语义两级缓存，重复 prompt 免 API 调用，节省 50%+ 费用
+- **研究历史**：每次研究自动保存，可回看历史、查看每步耗时
+- **步骤追踪**：实时显示当前执行步骤和耗时（`[3/8] read: 10.3s`）
+- **报告导出**：自动生成结构化 JSON + Markdown 报告
 
-- 前后端通过 Next.js rewrites 统一到一个端口，**无 CORS 问题**
-- 任何人只需一个 `http://<IP>:3000` 地址即可使用
-
-## 快速开始
-
-### 1. 获取 API Key
-
-访问 [DeepSeek 平台](https://platform.deepseek.com/) 注册并创建 API Key。
-
-### 2. 安装依赖
+## 安装
 
 ```bash
+git clone git@github.com:1583477320/ResearchAgent.git
+cd ResearchAgent
+
+# 后端
 cd backend && pip install -r requirements.txt
+
+# 前端
 cd ../frontend && npm install
 ```
 
-### 3. 配置
+## 运行
 
 ```bash
-cd ../backend
-cp .env.example .env
-# 编辑 .env，填入 API Key: DEEPSEEK_API_KEY=sk-xxx
-```
+# 配置 API Key
+cp backend/.env.example backend/.env
+# 编辑 backend/.env：DEEPSEEK_API_KEY=sk-xxx
 
-### 4. 启动
-
-```bash
-cd ..
+# 一键启动
 bash start.sh
 ```
 
-打开 `http://<服务器IP>:3000` 即可使用。
+打开 `http://localhost:3000`，输入研究主题即可。
 
-## 配置参考 (`.env`)
+> 前端内置 API 代理，无需分别访问前后端端口。
+
+## 配置 (`.env`)
 
 ```ini
 LLM_PROVIDER=deepseek
 DEEPSEEK_API_KEY=sk-xxx
-DEEPSEEK_MODEL_NAME=deepseek-chat
 
-# 记忆系统
-MEMORY_ENABLED=true
-LLM_CACHE_ENABLED=true
-
-# 性能调优
-MAX_CRITIC_ITERATIONS=2      # 循环评审次数 (1=快, 3=深入)
+# 搜索设置
+SEARCH_VENUES=NeurIPS,ICML,ICLR,CVPR,ACL,OSDI,SOSP,...
 DEFAULT_MAX_PAPERS=5
 
-# 语义搜索（可选）
-# EMBEDDING_MODEL_NAME=text-embedding-3-small
+# 性能
+MAX_CRITIC_ITERATIONS=2    # 评审循环次数 (1=快, 3=深入)
+LLM_CACHE_ENABLED=true
 ```
 
-## 记忆系统
-
-| 能力 | 说明 |
-|------|------|
-| LLM 缓存 | 精确 + 语义两级缓存，节省 API 费用 |
-| 研究历史 | 每次研究自动保存，可回看、删除 |
-| 知识库 | FTS5 全文搜索 + FAISS 语义搜索 |
-| 时间线 | 每步耗时记录，定位瓶颈 |
-
-## API 端点
+## 架构
 
 ```
-POST   /api/query                  提交研究主题
-GET    /api/status/{id}            查询进度 (含进度消息)
-GET    /api/report/{id}            获取报告
-GET    /api/history                历史研究列表
-GET    /api/history/{id}           研究详情 + 步骤时间线
-DELETE /api/history/{id}           删除记录
-GET    /api/knowledge/search?q=    知识库搜索
+用户输入 → Next.js :3000 ──代理──→ FastAPI :8000
+                                      │
+                                 LangGraph 工作流
+                                      │
+                   ┌──────────────────┼──────────────────┐
+              Planner          Researcher(MCP)        Reader
+                   │                                    │
+              GapAgent ←──→ CriticAgent (循环评审)      │
+                   │                                    │
+              SolutionAgent → ExperimentAgent → Package │
+                                      │
+                                 SQLite + FAISS
+                              (历史 / 缓存 / 知识库)
 ```
 
-## 项目结构
+## 截图
 
-```
-ResearchAgent/
-├── start.sh                  一键启动脚本
-├── backend/
-│   ├── run.py                后端入口
-│   └── src/
-│       ├── api/              FastAPI 路由
-│       ├── agents/           8 个 AI Agent
-│       ├── workflow/         LangGraph 工作流
-│       ├── memory/           记忆系统 (SQLite + FAISS)
-│       ├── services/         论文搜索 / 仓库
-│       ├── schemas/          数据模型
-│       └── utils/            配置 / LLM客户端 / 日志
-└── frontend/
-    ├── next.config.mjs       API 代理配置
-    └── app/                  Next.js 页面 + 组件
-```
+![主界面](screenshots/main.png)
+
+## Roadmap
+
+- [x] LLM 响应缓存
+- [x] 研究历史 + 步骤时间线
+- [x] 顶会/顶刊过滤
+- [x] 年份范围限定
+- [x] 前端设置面板
+- [ ] 论文语义搜索 (FAISS)
+- [ ] 多用户支持
+- [ ] Docker 一键部署
+- [ ] 论文 PDF 上传 + 自动分析
+- [ ] 导出 Word/PDF 报告
 
 ## 技术栈
 
-- **后端**: Python 3.10+, FastAPI, LangChain, LangGraph
-- **前端**: Next.js 14, React 18, TypeScript, Tailwind CSS
-- **存储**: SQLite (stdlib) + FAISS (向量搜索) + FTS5 (全文搜索)
-- **AI**: OpenAI 兼容 API (DeepSeek / Qwen / OpenAI)
+Python 3.10+, FastAPI, LangChain, LangGraph, Next.js 14, React 18, TypeScript, Tailwind CSS, SQLite, FAISS
 
 ## 许可证
 
-仅供学习和研究使用。
+MIT
