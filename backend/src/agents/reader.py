@@ -11,9 +11,9 @@ logger = get_logger(__name__)
 
 
 class ReadingAgent:
-    def __init__(self):
+    def __init__(self, cached_llm=None):
         self._validate_api_key()
-        self.llm = get_llm_client()
+        self.llm = cached_llm or get_llm_client()
         self.prompt = AgentPrompts.READER
     
     def _validate_api_key(self):

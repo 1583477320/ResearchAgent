@@ -18,9 +18,9 @@ class SolutionResult(BaseModel):
 
 
 class SolutionAgent:
-    def __init__(self):
+    def __init__(self, cached_llm=None):
         self._validate_api_key()
-        self.llm = get_llm_client()
+        self.llm = cached_llm or get_llm_client()
         self.parser = PydanticOutputParser(pydantic_object=SolutionResult)
     
     def _validate_api_key(self):
@@ -87,11 +87,16 @@ class SolutionAgent:
                 "implementation_plan": []
             }
     
-    def generate_solution_report(self, research_gaps: List[Dict[str, Any]], research_questions: List[Dict[str, Any]]) -> str:
-        """生成解决方案报告（Markdown格式）"""
+    def generate_solution_report(self, research_gaps: List[Dict[str, Any]] = None,
+                                   research_questions: List[Dict[str, Any]] = None,
+                                   solution: Dict[str, Any] = None) -> str:
+        """生成解决方案报告（Markdown格式）
+
+        solution: 如果已调用过 propose_solution，直接传入结果，避免重复 LLM 调用
+        """
         logger.info("Generating solution report")
-        
-        solution = self.propose_solution(research_gaps, research_questions)
+        if solution is None:
+            solution = self.propose_solution(research_gaps or [], research_questions or [])
         
         md = "# 解决方案\n\n"
         

@@ -12,18 +12,19 @@ class ResearchAgent:
     def __init__(self):
         self.scholar_client = get_scholar_search_client()
     
-    def search_papers(self, keywords: List[str], max_papers: int = 10) -> List[Paper]:
-        logger.info(f"Searching papers for keywords: {keywords}")
-        
-        return asyncio.run(self._search_papers_async(keywords, max_papers))
-    
-    async def _search_papers_async(self, keywords: List[str], max_papers: int) -> List[Paper]:
+    def search_papers(self, keywords: List[str], max_papers: int = 10, venues: list = None,
+                       year: str = None) -> List[Paper]:
+        logger.info(f"Searching papers: keywords={keywords}, venues={venues}, year={year}")
+        return asyncio.run(self._search_papers_async(keywords, max_papers, venues, year))
+
+    async def _search_papers_async(self, keywords: List[str], max_papers: int,
+                                     venues: list = None, year: str = None) -> List[Paper]:
         all_papers = []
         seen_titles = set()
-        
+
         for keyword in keywords:
             try:
-                results = await self.scholar_client.search(keyword, max_papers)
+                results = await self.scholar_client.search(keyword, max_papers, venues=venues, year=year)
                 papers_data = results.get("papers", []) if isinstance(results, dict) else results
                 
                 for result in papers_data:

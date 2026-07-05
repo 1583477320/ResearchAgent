@@ -16,8 +16,8 @@ class CriticFeedback(BaseModel):
 
 
 class CriticAgent:
-    def __init__(self):
-        self.llm = get_llm_client()
+    def __init__(self, cached_llm=None):
+        self.llm = cached_llm or get_llm_client()
         self.parser = PydanticOutputParser(pydantic_object=CriticFeedback)
         self.prompt = ChatPromptTemplate.from_messages([
             ("system", """

@@ -9,12 +9,16 @@ venv/
 *.egg-info/
 
 # Next.js
-frontend/
+frontend/node_modules/
+frontend/.next/
 
 # 运行时数据
 backend/output/
 backend/research_repo/
 backend/vector_store/
+*.db
+*.db-wal
+*.db-shm
 
 # 系统
 .DS_Store

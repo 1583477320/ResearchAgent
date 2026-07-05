@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 from pydantic import BaseModel
 from .paper import Paper
 
@@ -10,16 +10,7 @@ class TaskStatus(BaseModel):
     progress: float = 0.0
 
 
-class ResearchReport(BaseModel):
-    topic: str
-    summary: str
-    papers: List[Paper]
-    research_trends: str
-    key_findings: List[str]
-    references: List[str]
-
-
 class ReportResponse(BaseModel):
     success: bool
-    report: Optional[ResearchReport] = None
+    report: Optional[Dict[str, Any]] = None
     error: Optional[str] = None

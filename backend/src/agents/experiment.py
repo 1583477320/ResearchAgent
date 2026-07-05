@@ -31,9 +31,9 @@ class ExperimentResult(BaseModel):
 
 
 class ExperimentAgent:
-    def __init__(self):
+    def __init__(self, cached_llm=None):
         self._validate_api_key()
-        self.llm = get_llm_client()
+        self.llm = cached_llm or get_llm_client()
         self.parser = PydanticOutputParser(pydantic_object=ExperimentResult)
     
     def _validate_api_key(self):
@@ -89,11 +89,15 @@ class ExperimentAgent:
                 "expected_outcomes": []
             }
     
-    def generate_experiment_report(self, solution: Dict[str, Any]) -> str:
-        """生成实验设计报告（Markdown格式）"""
+    def generate_experiment_report(self, solution: Dict[str, Any] = None,
+                                     experiment: Dict[str, Any] = None) -> str:
+        """生成实验设计报告（Markdown格式）
+
+        experiment: 如果已调用过 design_experiment，直接传入结果，避免重复 LLM 调用
+        """
         logger.info("Generating experiment report")
-        
-        experiment = self.design_experiment(solution)
+        if experiment is None:
+            experiment = self.design_experiment(solution or {})
         
         md = "# 实验设计\n\n"
         

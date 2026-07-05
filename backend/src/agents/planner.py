@@ -19,9 +19,9 @@ class ResearchPlan(BaseModel):
 
 
 class PlannerAgent:
-    def __init__(self):
+    def __init__(self, cached_llm=None):
         self._validate_api_key()
-        self.llm = get_llm_client()
+        self.llm = cached_llm or get_llm_client()
         self.parser = PydanticOutputParser(pydantic_object=ResearchPlan)
 
     def _validate_api_key(self):

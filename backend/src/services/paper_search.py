@@ -26,13 +26,20 @@ class ScholarSearchClient:
             if self.tool:
                 logger.info(f"Loaded MCP tool via MultiServerMCPClient: {self.tool.name}")
     
-    async def search(self, query: str, max_results: int = 10) -> Dict[str, Any]:
+    async def search(self, query: str, max_results: int = 10, venues: list = None,
+                     year: str = None) -> Dict[str, Any]:
         await self._ensure_client()
-        
+
         if not self.tool:
             raise ValueError("search_papers tool not found in MCP server")
-        
-        result = await self.tool.ainvoke({"query": query, "max_results": max_results})
+
+        params = {"query": query, "limit": max_results}
+        if venues:
+            params["venue"] = venues
+        if year:
+            params["year"] = year
+
+        result = await self.tool.ainvoke(params)
         
         if isinstance(result, str):
             try:
